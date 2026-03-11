@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  Active
+  Inactive
+}
+
+model sec_user {
+  ID           Int      @id @default(autoincrement())
+  Username     String   @unique @db.VarChar(50)
+  PasswordHash String   @db.VarChar(255)
+  Name         String   @db.VarChar(100)
+  IsCustomer   Boolean  @default(false)
+  IsVendor     Boolean  @default(false)
+  
+  Status       Status   @default(Active)
+  
+  // Audit Fields
+  Created_By   String   @db.VarChar(100)
+  Created_Date DateTime @default(now())
+  Updated_By   String?  @db.VarChar(100)
+  Updated_Date DateTime? @updatedAt
+  Deleted_By   String?  @db.VarChar(100)
+  Deleted_Date DateTime?
+
+  // Relations
+  Companies    rel_user_company[]
+}
+
+model mst_company {
+  ID           Int      @id @default(autoincrement())
+  Odoo_ID      Int      @unique // ID reference to Odoo company
+  Name         String   @unique @db.VarChar(255)
+  
+  Status       Status   @default(Active)
+
+  // Audit Fields
+  Created_By   String   @db.VarChar(100)
+  Created_Date DateTime @default(now())
+  Updated_By   String?  @db.VarChar(100)
+  Updated_Date DateTime? @updatedAt
+  Deleted_By   String?  @db.VarChar(100)
+  Deleted_Date DateTime?
+
+  // Relations
+  Users        rel_user_company[]
+}
+
+model rel_user_company {
+  User_ID      Int
+  Company_ID   Int
+
+  User         sec_user    @relation(fields: [User_ID], references: [ID])
+  Company      mst_company @relation(fields: [Company_ID], references: [ID])
+
+  @@id([User_ID, Company_ID])
+}
