@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 interface Company {
   ID: number;
@@ -11,6 +12,7 @@ interface Company {
 export default function CreateContactForm() {
   const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [user, setUser] = useState<{ username: string; isCustomer: boolean; isVendor: boolean } | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -19,7 +21,7 @@ export default function CreateContactForm() {
     address: "",
     email: "",
     phone: "",
-    customerRank: 1, // Default to Customer
+    customerRank: 0,
     supplierRank: 0,
     invCode: "",
     belongToCompanyIds: [] as number[],
@@ -53,9 +55,11 @@ export default function CreateContactForm() {
 
       if (!res.ok) {
         setError(responseData.message || "Failed to create contact");
+        toast.error(responseData.message || "Failed to create contact");
         return;
       }
 
+      toast.success(responseData.message);
       router.push("/contacts");
     } catch (error: any) {
       console.error("Submit error:", error);
@@ -68,15 +72,45 @@ export default function CreateContactForm() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/form-data/companies");
-        const data = await res.json();
+        const [companiesRes, userRes] = await Promise.all([
+          fetch("/api/form-data/companies"),
+          fetch("/api/auth/me")
+        ]);
 
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to fetch companies");
+        const companiesData = await companiesRes.json();
+        const userData = await userRes.json();
+
+        if (!companiesRes.ok) {
+          throw new Error(companiesData.message || "Failed to fetch companies");
         }
 
-        if (data.success) {
-          setCompanies(data.data);
+        if (companiesData.success) {
+          setCompanies(companiesData.data);
+        }
+
+        if (userData.success) {
+          setUser(userData.user);
+          const userObj = userData.user;
+
+          const isAdmin = userObj.username === 'admin';
+          let initialCustomerRank = 0;
+          let initialSupplierRank = 0;
+
+          if (isAdmin) {
+            initialCustomerRank = 1; // Default for admin
+          } else if (userObj.isCustomer && !userObj.isVendor) {
+            initialCustomerRank = 1;
+          } else if (!userObj.isCustomer && userObj.isVendor) {
+            initialSupplierRank = 1;
+          } else if (userObj.isCustomer && userObj.isVendor) {
+            initialCustomerRank = 1; // Both allowed, default to customer
+          }
+
+          setFormData(prev => ({
+            ...prev,
+            customerRank: initialCustomerRank,
+            supplierRank: initialSupplierRank
+          }));
         }
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
@@ -92,12 +126,15 @@ export default function CreateContactForm() {
     return <div>Loading...</div>;
   }
 
-  if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
-  }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
+
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-slate-700">
           Name *
@@ -155,32 +192,36 @@ export default function CreateContactForm() {
       <div>
         <label className="block text-sm font-medium text-slate-700">Partner Type</label>
         <div className="mt-2 flex items-center space-x-6">
-          <div className="flex items-center">
-            <input
-              id="customer"
-              name="partnerType"
-              type="radio"
-              checked={formData.customerRank === 1}
-              onChange={() => setFormData({ ...formData, customerRank: 1, supplierRank: 0 })}
-              className="h-4 w-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
-            />
-            <label htmlFor="customer" className="ml-3 block text-sm font-medium text-slate-700">
-              Customer
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input
-              id="vendor"
-              name="partnerType"
-              type="radio"
-              checked={formData.supplierRank === 1}
-              onChange={() => setFormData({ ...formData, supplierRank: 1, customerRank: 0 })}
-              className="h-4 w-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
-            />
-            <label htmlFor="vendor" className="ml-3 block text-sm font-medium text-slate-700">
-              Vendor
-            </label>
-          </div>
+          {(user?.username === "admin" || user?.isCustomer) && (
+            <div className="flex items-center">
+              <input
+                id="customer"
+                name="partnerType"
+                type="radio"
+                checked={formData.customerRank === 1}
+                onChange={() => setFormData({ ...formData, customerRank: 1, supplierRank: 0 })}
+                className="h-4 w-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
+              />
+              <label htmlFor="customer" className="ml-3 block text-sm font-medium text-slate-700">
+                Customer
+              </label>
+            </div>
+          )}
+          {(user?.username === "admin" || user?.isVendor) && (
+            <div className="flex items-center">
+              <input
+                id="vendor"
+                name="partnerType"
+                type="radio"
+                checked={formData.supplierRank === 1}
+                onChange={() => setFormData({ ...formData, supplierRank: 1, customerRank: 0 })}
+                className="h-4 w-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
+              />
+              <label htmlFor="vendor" className="ml-3 block text-sm font-medium text-slate-700">
+                Vendor
+              </label>
+            </div>
+          )}
         </div>
       </div>
 

@@ -5,6 +5,25 @@ type OdooAuthConfig = {
   password: string;
 };
 
+import { prisma } from "./prisma";
+
+export async function mapLocalCompanyIdsToOdooIds(
+  localIds: number[]
+): Promise<number[]> {
+  if (!Array.isArray(localIds) || localIds.length === 0) return [];
+
+  const companies = await prisma.mst_company.findMany({
+    where: {
+      ID: { in: localIds }
+    },
+    select: {
+      Odoo_ID: true
+    }
+  });
+
+  return companies.map((c) => c.Odoo_ID).filter((id): id is number => id !== null);
+}
+
 export type OdooContact = {
   id: number;
   name: string;
@@ -953,11 +972,15 @@ export async function updateOdooContact(
     if (params.invCode !== undefined) record.x_studio_inv_code = params.invCode;
 
     if (Array.isArray(params.belongToCompanyIds)) {
-      record.x_studio_belong_to_company = [[6, 0, params.belongToCompanyIds]];
+      // Command (4, id, 0) adds a relationship. This is correct for merging.
+      const commands = params.belongToCompanyIds.map(id => [4, id, 0]);
+      record.x_studio_belong_to_company = commands;
     }
 
     if (Array.isArray(params.journalNameIds)) {
-      record.x_studio_journal_name = [[6, 0, params.journalNameIds]];
+      // Also apply merge logic for journals
+      const commands = params.journalNameIds.map(id => [4, id, 0]);
+      record.x_studio_journal_name = commands;
     }
 
     if (Object.keys(record).length === 0) {

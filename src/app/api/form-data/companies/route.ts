@@ -16,7 +16,7 @@ export async function GET() {
   const isAdmin = session.user.username === 'admin';
 
   try {
-    let companies: mst_company[];
+    let companies: mst_company[] = [];
     if (isAdmin) {
       // Admin gets all active companies
       companies = await prisma.mst_company.findMany({

@@ -4,7 +4,8 @@ import {
   searchOdooContactByName,
   updateOdooContact,
   CreateContactParams,
-  getJournalIdsByNameAndCompany
+  getJournalIdsByNameAndCompany,
+  mapLocalCompanyIdsToOdooIds
 } from "@/lib/odooClient";
 import {
   cleanNameForComparison,
@@ -30,6 +31,12 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
+  console.log("[API /odoo/contacts] Received body:", JSON.stringify(body, null, 2));
+
+  // Map local company IDs to Odoo IDs
+  const localCompanyIds = Array.isArray(body.belongToCompanyIds) ? body.belongToCompanyIds : [];
+  const odooCompanyIds = await mapLocalCompanyIdsToOdooIds(localCompanyIds);
+  console.log("[API /odoo/contacts] Mapped Odoo Company IDs:", odooCompanyIds);
 
   const isAdmin = session.user.username === 'admin';
 
@@ -60,35 +67,39 @@ export async function POST(request: Request) {
 
     if (existingContact) {
       // A contact with a similar name exists, now check if it's a true duplicate or a merge candidate.
-      const newCompanyIds = body.belongToCompanyIds || [];
-      const newIsCustomer = (body.customerRank || 0) === 1;
-      const newIsVendor = (body.supplierRank || 0) === 1;
+      const newCompanyIds = odooCompanyIds;
+      const newIsCustomer = (body.customerRank || 0) > 0;
+      const newIsVendor = (body.supplierRank || 0) > 0;
 
       const existingCompanyIds = existingContact.belongToCompanyIds || [];
-      const existingIsCustomer = (existingContact.customerRank || 0) === 1;
-      const existingIsVendor = (existingContact.supplierRank || 0) === 1;
+      const existingIsCustomer = (existingContact.customerRank || 0) > 0;
+      const existingIsVendor = (existingContact.supplierRank || 0) > 0;
 
-      const companyOverlap = newCompanyIds.some((id: number) => existingCompanyIds.includes(id));
-      const isTrueDuplicate = companyOverlap && 
-                              ((newIsCustomer && existingIsCustomer) || (newIsVendor && existingIsVendor));
+      // Determine journal type for the request
+      const typeName = supplierRank === 1 && customerRank !== 1 ? "Vendor Bills" : "Customer Invoice";
+      let newJournalIds: number[] = [];
+      if (odooCompanyIds.length > 0) {
+        newJournalIds = await getJournalIdsByNameAndCompany(typeName, odooCompanyIds);
+      }
 
-      if (isTrueDuplicate) {
+      const existingJournalIds = existingContact.journalNameIds || [];
+      const isAddingNewJournal = newJournalIds.some((id: number) => !existingJournalIds.includes(id));
+      const isAddingNewCompany = odooCompanyIds.some((id: number) => !existingCompanyIds.includes(id));
+      const isAddingCustomerType = newIsCustomer && !existingIsCustomer;
+      const isAddingVendorType = newIsVendor && !existingIsVendor;
+
+      const hasNewInformation = isAddingNewCompany || isAddingCustomerType || isAddingVendorType || isAddingNewJournal;
+
+      if (!hasNewInformation) {
         return new Response(JSON.stringify({
           success: false,
-          message: "This contact already exists for the selected company and partner type."
+          message: "This contact already exists with the selected companies and partner types."
         }), { status: 409, headers: { "Content-Type": "application/json" } });
       }
 
       // Logic Update (Merge)
-      const newBelongToCompanyIds = Array.isArray(body.belongToCompanyIds) ? body.belongToCompanyIds : [];
-      const typeName = supplierRank === 1 && customerRank !== 1 ? "Vendor Bills" : "Customer Invoice";
-      let newJournalIds: number[] = [];
-      if (newBelongToCompanyIds.length > 0) {
-        newJournalIds = await getJournalIdsByNameAndCompany(typeName, newBelongToCompanyIds);
-      }
-
-      const mergedCompanyIds = Array.from(new Set([...(existingContact.belongToCompanyIds || []), ...newBelongToCompanyIds]));
-      const mergedJournalIds = Array.from(new Set([...(existingContact.journalNameIds || []), ...newJournalIds]));
+      const mergedCompanyIds = Array.from(new Set([...existingCompanyIds, ...odooCompanyIds]));
+      const mergedJournalIds = Array.from(new Set([...existingJournalIds, ...newJournalIds]));
       const newSupplierRank = Math.max(existingContact.supplierRank || 0, supplierRank || 0);
       const newCustomerRank = Math.max(existingContact.customerRank || 0, customerRank || 0);
 
@@ -117,13 +128,13 @@ export async function POST(request: Request) {
         supplierRank: supplierRank,
         customerRank: customerRank,
         invCode: body.invCode,
-        belongToCompanyIds: body.belongToCompanyIds,
+        belongToCompanyIds: odooCompanyIds,
         isCompany: true
       };
 
       const typeName = params.supplierRank === 1 && params.customerRank !== 1 ? "Vendor Bills" : "Customer Invoice";
-      if (Array.isArray(params.belongToCompanyIds) && params.belongToCompanyIds.length > 0) {
-        const journalIds = await getJournalIdsByNameAndCompany(typeName, params.belongToCompanyIds);
+      if (Array.isArray(odooCompanyIds) && odooCompanyIds.length > 0) {
+        const journalIds = await getJournalIdsByNameAndCompany(typeName, odooCompanyIds);
         if (journalIds.length > 0) {
           params.journalNameIds = journalIds;
         }

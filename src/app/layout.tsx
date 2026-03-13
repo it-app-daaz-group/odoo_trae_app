@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { sessionOptions } from "@/lib/session";
 import LogoutButton from "@/components/LogoutButton";
 import { SessionData } from "./types/iron-session";
+import { Toaster } from "react-hot-toast";
 
 type RootLayoutProps = {
   children: ReactNode;
@@ -61,9 +62,7 @@ export default async function RootLayout(props: RootLayoutProps) {
               </div>
             </aside>
             <main className="flex-1 p-8 overflow-y-auto">
-              <div className="max-w-7xl mx-auto">
-                {props.children}
-              </div>
+              {props.children}
             </main>
           </>
         ) : (
@@ -71,6 +70,7 @@ export default async function RootLayout(props: RootLayoutProps) {
             {props.children}
           </main>
         )}
+        <Toaster />
       </body>
     </html>
   );
