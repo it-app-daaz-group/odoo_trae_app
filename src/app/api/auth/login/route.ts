@@ -3,7 +3,6 @@ import { sessionOptions } from "@/lib/session";
 import bcrypt from "bcrypt";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import { SessionData } from "@/types/iron-session";
 
 export async function POST(request: Request) {
   try {
@@ -37,7 +36,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+    const session = await getIronSession(cookies(), sessionOptions) as any;
     session.user = {
       id: user.ID,
       username: user.Username,

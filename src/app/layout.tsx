@@ -5,7 +5,6 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { sessionOptions } from "@/lib/session";
 import LogoutButton from "@/components/LogoutButton";
-import { SessionData } from "./types/iron-session";
 import { Toaster } from "react-hot-toast";
 
 type RootLayoutProps = {
@@ -13,7 +12,7 @@ type RootLayoutProps = {
 };
 
 export default async function RootLayout(props: RootLayoutProps) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession(cookies(), sessionOptions) as any;
   const user = session.user;
   const isAdmin = user?.username === "admin";
 

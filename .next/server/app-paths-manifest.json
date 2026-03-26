@@ -1,5 +1,26 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/auth/allowed-companies/route": "app/api/auth/allowed-companies/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/auth/logout/route": "app/api/auth/logout/route.js",
+  "/api/auth/me/route": "app/api/auth/me/route.js",
   "/api/form-data/companies/route": "app/api/form-data/companies/route.js",
+  "/api/odoo/companies/route": "app/api/odoo/companies/route.js",
+  "/api/auth/seed/route": "app/api/auth/seed/route.js",
+  "/api/odoo/companies/sync/route": "app/api/odoo/companies/sync/route.js",
+  "/api/odoo/contacts/[id]/route": "app/api/odoo/contacts/[id]/route.js",
+  "/api/odoo/contacts/route": "app/api/odoo/contacts/route.js",
+  "/api/odoo/test-connection/route": "app/api/odoo/test-connection/route.js",
+  "/api/odoo/users/[id]/route": "app/api/odoo/users/[id]/route.js",
+  "/api/odoo/users/route": "app/api/odoo/users/route.js",
+  "/cleaned-names/page": "app/cleaned-names/page.js",
   "/contacts/create/page": "app/contacts/create/page.js",
-  "/api/auth/me/route": "app/api/auth/me/route.js"
+  "/icon.svg/route": "app/icon.svg/route.js",
+  "/login/page": "app/login/page.js",
+  "/users/[id]/edit/page": "app/users/[id]/edit/page.js",
+  "/users/create/page": "app/users/create/page.js",
+  "/page": "app/page.js",
+  "/users/page": "app/users/page.js",
+  "/contacts/page": "app/contacts/page.js",
+  "/contacts/[id]/edit/page": "app/contacts/[id]/edit/page.js"
 }

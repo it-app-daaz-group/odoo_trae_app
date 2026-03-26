@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { SessionData } from "./types/iron-session";
 
 export async function middleware(request: NextRequest) {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession(cookies(), sessionOptions) as any;
   const user = session.user;
 
   const { pathname } = request.nextUrl;

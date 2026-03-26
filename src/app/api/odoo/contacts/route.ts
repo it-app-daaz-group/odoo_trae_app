@@ -25,7 +25,7 @@ import { cookies } from "next/headers";
 import { sessionOptions } from "@/lib/session";
 
 export async function POST(request: Request) {
-  const session = await getIronSession(cookies(), sessionOptions);
+  const session = await getIronSession(cookies(), sessionOptions) as any;
   if (!session.user) {
     return new Response(JSON.stringify({ success: false, message: "Unauthorized" }), { status: 401 });
   }

@@ -5,7 +5,7 @@ import { sessionOptions } from "@/lib/session";
 import { SessionData } from "@/types/iron-session";
 
 export async function GET() {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession(cookies(), sessionOptions) as any;
   if (!session.user || session.user.username !== 'admin') {
     return new Response(JSON.stringify({ success: false, message: "Forbidden" }), { status: 403 });
   }

@@ -7,7 +7,7 @@ import { SessionData } from "@/types/iron-session";
 import { mst_company } from '@prisma/client';
 
 export async function GET() {
-  const session = await getIronSession<SessionData>(cookies(), sessionOptions);
+  const session = await getIronSession(cookies(), sessionOptions) as any;
 
   if (!session.user) {
     return new Response(JSON.stringify({ success: false, message: "Unauthorized" }), { status: 401 });
