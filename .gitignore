@@ -3,5 +3,7 @@ node_modules
 .env
 .env.local
 .next/
+*.tsbuildinfo
+*.zip
 
 /src/generated/prisma

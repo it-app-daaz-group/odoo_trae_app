@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 interface Company {
@@ -25,18 +25,13 @@ export default function UserForm({ id }: UserFormProps) {
     isVendor: false,
   });
 
-  useEffect(() => {
-    fetchCompanies();
-    if (id) fetchUser();
-  }, [id]);
-
-  async function fetchCompanies() {
+  const fetchCompanies = useCallback(async () => {
     const res = await fetch("/api/odoo/companies");
     const data = await res.json();
     if (data.success) setCompanies(data.data);
-  }
+  }, []);
 
-  async function fetchUser() {
+  const fetchUser = useCallback(async () => {
     const res = await fetch(`/api/odoo/users/${id}`);
     const data = await res.json();
     if (data.success) {
@@ -44,13 +39,18 @@ export default function UserForm({ id }: UserFormProps) {
       setFormData({
         name: user.name,
         username: user.username,
-        password: "", // Don't show password
+        password: "",
         companyIds: user.companies.map((c: any) => c.id),
         isCustomer: user.isCustomer,
         isVendor: user.isVendor,
       });
     }
-  }
+  }, [id]);
+
+  useEffect(() => {
+    fetchCompanies();
+    if (id) fetchUser();
+  }, [id, fetchCompanies, fetchUser]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

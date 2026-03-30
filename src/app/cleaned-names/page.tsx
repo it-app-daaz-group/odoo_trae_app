@@ -12,7 +12,9 @@ export default async function CleanedNamesPage() {
           {contacts.map((contact) => (
             <li key={contact.id} className="p-4 flex justify-between items-center">
               <span className="text-gray-500 font-medium">{contact.name}</span>
-              <span className="text-gray-900 font-bold">{cleanNameForComparison(contact.name)}</span>
+              <span className="text-gray-900 font-bold">
+                {cleanNameForComparison(contact.name).replace(/\s+/g, "")}
+              </span>
             </li>
           ))}
         </ul>

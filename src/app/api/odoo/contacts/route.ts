@@ -10,7 +10,8 @@ import {
 import {
   cleanNameForComparison,
   removePunctuation,
-  toProperCaseWithExceptions
+  toProperCaseWithExceptions,
+  cleanNameKey
 } from "@/lib/stringUtils";
 
 type ApiResponse<T> = {
@@ -60,9 +61,9 @@ export async function POST(request: Request) {
 
     // New, robust check logic
     const allContacts = await getOdooContacts();
-    const cleanedNewName = cleanNameForComparison(body.name);
+    const newKey = cleanNameKey(body.name);
     const existingContact = allContacts.find(
-      (contact) => cleanNameForComparison(contact.name) === cleanedNewName
+      (contact) => cleanNameKey(contact.name) === newKey
     );
 
     if (existingContact) {

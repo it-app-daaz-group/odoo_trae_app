@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { getOdooCompanies } from "@/lib/odooClient";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const odooCompanies = await getOdooCompanies();

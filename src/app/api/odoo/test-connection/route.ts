@@ -7,6 +7,8 @@ type ApiResponse<T> = {
   errors: string[];
 };
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const uid = await authenticateWithOdoo();
@@ -47,4 +49,3 @@ export async function GET() {
     });
   }
 }
-

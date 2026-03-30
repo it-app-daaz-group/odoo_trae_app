@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export async function GET(
   request: Request,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const id = parseInt(params.id);
-    const user = await prisma.sec_user.findUnique({
+    const user = await prisma.sec_user.findFirst({
       where: { ID: id, Status: "Active" },
       include: {
         Companies: {

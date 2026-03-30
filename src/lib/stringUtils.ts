@@ -46,3 +46,7 @@ export function toProperCaseWithExceptions(str: string): string {
     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
   });
 }
+
+export function cleanNameKey(name: string): string {
+  return cleanNameForComparison(name).replace(/\s+/g, "");
+}

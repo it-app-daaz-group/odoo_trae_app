@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.gitignore
+.vscode
+npm-debug.log
+yarn.lock
+Dockerfile
+.dockerignore
+.traerules
+design-system.md
+.env
+*.local
+*.log

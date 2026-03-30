@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  odoo18-app:
+    build: .
+    image: odoo18-app:latest
+    ports:
+      - "3002:3002"
+    env_file:
+      - .env
+      - .env.local
+    environment:
+      NODE_ENV: production
+      PORT: "3002"
+      COOKIE_SECURE: "false"
+    restart: unless-stopped

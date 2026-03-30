@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sessionOptions } from "@/lib/session";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await prisma.sec_user.findUnique({
+    const user = await prisma.sec_user.findFirst({
       where: { Username: username, Status: "Active" },
       include: { Companies: true },
     });
