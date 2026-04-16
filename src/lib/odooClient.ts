@@ -1050,3 +1050,62 @@ export async function deleteOdooContact(id: number): Promise<boolean> {
     );
   });
 }
+
+type OdooPartnerLogChange =
+  | { label: string; value: string }
+  | { label: string; from: string; to: string };
+
+export async function logOdooPartnerChange(params: {
+  partnerId: number;
+  actor: string;
+  action: string;
+  changes?: OdooPartnerLogChange[];
+}): Promise<void> {
+  const config = getOdooConfig();
+  const uid = await authenticateWithOdoo();
+
+  const client = (await import("xmlrpc")).createClient({
+    url: `${config.url}/xmlrpc/2/object`
+  });
+
+  const actor = params.actor?.trim() ? params.actor.trim() : "Unknown";
+  const action = params.action?.trim() ? params.action.trim() : "Update";
+  const changes = Array.isArray(params.changes) ? params.changes : [];
+
+  const lines = [
+    action,
+    `By: ${actor}`,
+    ...changes.map((c) => {
+      if ("value" in c) return `- ${c.label}: ${c.value}`;
+      return `- ${c.label}: ${c.from} -> ${c.to}`;
+    })
+  ];
+
+  const body = lines.join("\n");
+
+  await new Promise<void>((resolve, reject) => {
+    client.methodCall(
+      "execute_kw",
+      [
+        config.database,
+        uid,
+        config.password,
+        "res.partner",
+        "message_post",
+        [[params.partnerId]],
+        {
+          body,
+          message_type: "comment",
+          subtype_xmlid: "mail.mt_note"
+        }
+      ],
+      (error: unknown) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve();
+      }
+    );
+  });
+}

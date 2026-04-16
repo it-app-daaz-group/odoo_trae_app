@@ -5,7 +5,8 @@ import {
   updateOdooContact,
   CreateContactParams,
   getJournalIdsByNameAndCompany,
-  mapLocalCompanyIdsToOdooIds
+  mapLocalCompanyIdsToOdooIds,
+  logOdooPartnerChange
 } from "@/lib/odooClient";
 import {
   cleanNameForComparison,
@@ -111,6 +112,57 @@ export async function POST(request: Request) {
         customerRank: newCustomerRank
       });
 
+      try {
+        const addedCompanyIds = odooCompanyIds.filter(
+          (id: number) => !existingCompanyIds.includes(id)
+        );
+        const addedJournalIds = newJournalIds.filter(
+          (id: number) => !existingJournalIds.includes(id)
+        );
+
+        const changes = [
+          ...(addedCompanyIds.length
+            ? [{ label: "Added Company IDs", value: addedCompanyIds.join(", ") }]
+            : []),
+          ...(addedJournalIds.length
+            ? [{ label: "Added Journal IDs", value: addedJournalIds.join(", ") }]
+            : []),
+          ...(isAddingVendorType
+            ? [{ label: "Partner Type", value: "Vendor added" }]
+            : []),
+          ...(isAddingCustomerType
+            ? [{ label: "Partner Type", value: "Customer added" }]
+            : []),
+          ...(newSupplierRank !== (existingContact.supplierRank || 0)
+            ? [
+                {
+                  label: "Supplier Rank",
+                  from: String(existingContact.supplierRank || 0),
+                  to: String(newSupplierRank)
+                }
+              ]
+            : []),
+          ...(newCustomerRank !== (existingContact.customerRank || 0)
+            ? [
+                {
+                  label: "Customer Rank",
+                  from: String(existingContact.customerRank || 0),
+                  to: String(newCustomerRank)
+                }
+              ]
+            : [])
+        ];
+
+        await logOdooPartnerChange({
+          partnerId: existingContact.id,
+          actor: session.user.username,
+          action: "Contact updated via Integration (merge)",
+          changes
+        });
+      } catch (error) {
+        console.error("[Odoo Log] Failed to post merge log:", error);
+      }
+
       return new Response(JSON.stringify({ success: true, data: { id: existingContact.id }, message: "Contact updated successfully (merged)" }), { status: 200 });
     } else {
       // If contact doesn't exist, create it
@@ -142,6 +194,45 @@ export async function POST(request: Request) {
       }
 
       const newId = await createOdooContact(params);
+
+      try {
+        const partnerTypes: string[] = [];
+        if ((params.supplierRank || 0) > 0) partnerTypes.push("Vendor");
+        if ((params.customerRank || 0) > 0) partnerTypes.push("Customer");
+
+        const changes = [
+          { label: "Name", value: finalContactName },
+          ...(partnerTypes.length ? [{ label: "Partner Type", value: partnerTypes.join(", ") }] : []),
+          ...(typeof body.address === "string" && body.address.trim()
+            ? [{ label: "Address", value: body.address.trim() }]
+            : []),
+          ...(typeof body.email === "string" && body.email.trim()
+            ? [{ label: "Email", value: body.email.trim() }]
+            : []),
+          ...(typeof body.phone === "string" && body.phone.trim()
+            ? [{ label: "Phone", value: body.phone.trim() }]
+            : []),
+          ...(typeof body.invCode === "string" && body.invCode.trim()
+            ? [{ label: "Inv Code", value: body.invCode.trim() }]
+            : []),
+          ...(odooCompanyIds.length
+            ? [{ label: "Company IDs", value: odooCompanyIds.join(", ") }]
+            : []),
+          ...(Array.isArray(params.journalNameIds) && params.journalNameIds.length
+            ? [{ label: "Journal IDs", value: params.journalNameIds.join(", ") }]
+            : [])
+        ];
+
+        await logOdooPartnerChange({
+          partnerId: newId,
+          actor: session.user.username,
+          action: "Contact created via Integration",
+          changes
+        });
+      } catch (error) {
+        console.error("[Odoo Log] Failed to post create log:", error);
+      }
+
       return new Response(JSON.stringify({ success: true, data: { id: newId }, message: "Contact created successfully" }), { status: 201 });
     }
   } catch (error) {

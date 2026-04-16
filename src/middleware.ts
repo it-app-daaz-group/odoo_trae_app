@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
 
   // Role-based access control
   if (user && user.username !== 'admin') {
-    const allowedPaths = ['/contacts/create', '/api/auth/logout', '/api/auth/allowed-companies'];
+    const allowedPaths = ['/contacts/create', '/account', '/api/auth/logout', '/api/auth/allowed-companies'];
     if (!allowedPaths.some(p => pathname.startsWith(p))) {
       // If not admin and trying to access a restricted page, redirect to create contact
       return NextResponse.redirect(new URL('/contacts/create', request.url));

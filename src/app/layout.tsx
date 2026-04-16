@@ -48,11 +48,18 @@ export default async function RootLayout(props: RootLayoutProps) {
                     </>
                   )}
                   {!isAdmin && (
-                  <li>
-                    <Link href="/contacts/create" className="flex items-center p-3 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-blue-600 transition group">
-                      <span className="font-medium">Create Contact</span>
-                    </Link>
-                  </li>
+                    <>
+                      <li>
+                        <Link href="/contacts/create" className="flex items-center p-3 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-blue-600 transition group">
+                          <span className="font-medium">Create Contact</span>
+                        </Link>
+                      </li>
+                      <li>
+                        <Link href="/account" className="flex items-center p-3 rounded-lg hover:bg-slate-50 text-slate-700 hover:text-blue-600 transition group">
+                          <span className="font-medium">Account</span>
+                        </Link>
+                      </li>
+                    </>
                   )}
                 </ul>
               </nav>
