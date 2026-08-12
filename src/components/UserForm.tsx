@@ -19,7 +19,6 @@ export default function UserForm({ id }: UserFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     username: "",
-    password: "",
     companyIds: [] as number[],
     isCustomer: false,
     isVendor: false,
@@ -39,7 +38,6 @@ export default function UserForm({ id }: UserFormProps) {
       setFormData({
         name: user.name,
         username: user.username,
-        password: "",
         companyIds: user.companies.map((c: any) => c.id),
         isCustomer: user.isCustomer,
         isVendor: user.isVendor,
@@ -104,16 +102,8 @@ export default function UserForm({ id }: UserFormProps) {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-            <input
-              type="password"
-              required={!id}
-              placeholder={id ? "Leave empty to keep current" : ""}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-600 outline-none transition"
-              value={formData.password}
-              onChange={e => setFormData({ ...formData, password: e.target.value })}
-            />
+          <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Password user mengikuti akun Odoo. Pastikan username yang didaftarkan sama dengan username di Odoo.
           </div>
 
           <div>

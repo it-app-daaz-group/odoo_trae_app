@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import { sessionOptions } from "@/lib/session";
+import { isAdminUsername, sessionOptions } from "@/lib/session";
 import { SessionData } from "@/types/iron-session";
 
 import { mst_company } from '@prisma/client';
@@ -13,7 +13,7 @@ export async function GET() {
     return new Response(JSON.stringify({ success: false, message: "Unauthorized" }), { status: 401 });
   }
 
-  const isAdmin = session.user.username === 'admin';
+  const isAdmin = Boolean(session.user.isAdmin) || isAdminUsername(session.user.username);
 
   try {
     let companies: mst_company[] = [];

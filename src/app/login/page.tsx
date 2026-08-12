@@ -42,7 +42,7 @@ export default function LoginPage() {
       <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-blue-600">Odoo Integration</h1>
-          <p className="text-slate-500 mt-2">Sign in to your account</p>
+          <p className="text-slate-500 mt-2">Masuk dengan username dan password akun Odoo Anda</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getIronSession } from "iron-session";
-import { sessionOptions } from "@/lib/session";
+import { isAdminUsername, sessionOptions } from "@/lib/session";
 
 export async function middleware(request: NextRequest) {
   const session = await getIronSession(request.cookies as any, sessionOptions) as any;
@@ -21,12 +21,13 @@ export async function middleware(request: NextRequest) {
 
   // Redirect to create contact if logged in and on the login page
   if (user && pathname === "/login") {
-    const redirectUrl = user.username === 'admin' ? '/contacts' : '/contacts/create';
+    const isAdmin = Boolean(user.isAdmin) || isAdminUsername(user.username);
+    const redirectUrl = isAdmin ? "/contacts" : "/contacts/create";
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
   // Role-based access control
-  if (user && user.username !== 'admin') {
+  if (user && !(Boolean(user.isAdmin) || isAdminUsername(user.username))) {
     const allowedPaths = ['/contacts/create', '/account', '/api/auth/logout', '/api/auth/allowed-companies'];
     if (!allowedPaths.some(p => pathname.startsWith(p))) {
       // If not admin and trying to access a restricted page, redirect to create contact

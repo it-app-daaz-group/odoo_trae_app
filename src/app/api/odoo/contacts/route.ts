@@ -24,7 +24,7 @@ type ApiResponse<T> = {
 
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import { sessionOptions } from "@/lib/session";
+import { isAdminUsername, sessionOptions } from "@/lib/session";
 
 export async function POST(request: Request) {
   const session = await getIronSession(cookies(), sessionOptions) as any;
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   const odooCompanyIds = await mapLocalCompanyIdsToOdooIds(localCompanyIds);
   console.log("[API /odoo/contacts] Mapped Odoo Company IDs:", odooCompanyIds);
 
-  const isAdmin = session.user.username === 'admin';
+  const isAdmin = Boolean(session.user.isAdmin) || isAdminUsername(session.user.username);
 
   // Server-side validation: Check if all selected companies are allowed for the user
   if (!isAdmin) {

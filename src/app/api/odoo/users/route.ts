@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
 
 export async function GET() {
   try {
@@ -42,15 +41,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, username, password, companyIds, isCustomer, isVendor } = body;
-
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const { name, username, companyIds, isCustomer, isVendor } = body;
 
     const newUser = await prisma.sec_user.create({
       data: {
         Name: name,
         Username: username,
-        PasswordHash: hashedPassword,
+        // Schema lama masih mewajibkan kolom ini, tetapi login sudah diverifikasi ke Odoo.
+        PasswordHash: "ODOO_MANAGED_AUTH",
         IsCustomer: isCustomer,
         IsVendor: isVendor,
         Created_By: "Admin", // Should get from session in real app

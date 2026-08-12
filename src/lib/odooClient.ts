@@ -65,19 +65,31 @@ function getOdooConfig(): OdooAuthConfig {
   };
 }
 
-export async function authenticateWithOdoo(): Promise<number> {
+export async function authenticateOdooUser(
+  username: string,
+  password: string
+): Promise<number> {
   const config = getOdooConfig();
   const url = new URL(config.url);
   const isSecure = url.protocol === "https:";
-  
-  const client = isSecure 
-    ? (await import("xmlrpc")).createSecureClient({ host: url.hostname, port: 443, path: "/xmlrpc/2/common" })
-    : (await import("xmlrpc")).createClient({ host: url.hostname, port: 80, path: "/xmlrpc/2/common" });
+  const port = url.port ? parseInt(url.port, 10) : isSecure ? 443 : 80;
+
+  const client = isSecure
+    ? (await import("xmlrpc")).createSecureClient({
+        host: url.hostname,
+        port,
+        path: "/xmlrpc/2/common"
+      })
+    : (await import("xmlrpc")).createClient({
+        host: url.hostname,
+        port,
+        path: "/xmlrpc/2/common"
+      });
 
   const uid = await new Promise<number>((resolve, reject) => {
     client.methodCall(
       "authenticate",
-      [config.database, config.username, config.password, {}],
+      [config.database, username, password, {}],
       (error: unknown, value: unknown) => {
         if (error) {
           reject(error);
@@ -99,6 +111,11 @@ export async function authenticateWithOdoo(): Promise<number> {
   }
 
   return uid;
+}
+
+export async function authenticateWithOdoo(): Promise<number> {
+  const config = getOdooConfig();
+  return authenticateOdooUser(config.username, config.password);
 }
 
 export async function getOdooServerVersion(): Promise<string> {

@@ -12,7 +12,7 @@ interface Company {
 export default function CreateContactForm() {
   const router = useRouter();
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [user, setUser] = useState<{ username: string; isCustomer: boolean; isVendor: boolean } | null>(null);
+  const [user, setUser] = useState<{ username: string; isAdmin?: boolean; isCustomer: boolean; isVendor: boolean } | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -92,7 +92,7 @@ export default function CreateContactForm() {
           setUser(userData.user);
           const userObj = userData.user;
 
-          const isAdmin = userObj.username === 'admin';
+          const isAdmin = Boolean(userObj.isAdmin);
           let initialCustomerRank = 0;
           let initialSupplierRank = 0;
 
@@ -192,7 +192,7 @@ export default function CreateContactForm() {
       <div>
         <label className="block text-sm font-medium text-slate-700">Partner Type</label>
         <div className="mt-2 flex items-center space-x-6">
-          {(user?.username === "admin" || user?.isCustomer) && (
+          {(user?.isAdmin || user?.isCustomer) && (
             <div className="flex items-center">
               <input
                 id="customer"
@@ -207,7 +207,7 @@ export default function CreateContactForm() {
               </label>
             </div>
           )}
-          {(user?.username === "admin" || user?.isVendor) && (
+          {(user?.isAdmin || user?.isVendor) && (
             <div className="flex items-center">
               <input
                 id="vendor"

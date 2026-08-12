@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { sessionOptions } from "@/lib/session";
-import bcrypt from "bcryptjs";
+import { authenticateOdooUser } from "@/lib/odooClient";
+import { isAdminUsername, sessionOptions } from "@/lib/session";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 
@@ -27,9 +27,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.PasswordHash);
-
-    if (!isPasswordValid) {
+    try {
+      await authenticateOdooUser(username, password);
+    } catch {
       return new Response(
         JSON.stringify({ success: false, message: "Invalid credentials" }),
         { status: 401, headers: { "Content-Type": "application/json" } }
@@ -41,6 +41,7 @@ export async function POST(request: Request) {
       id: user.ID,
       username: user.Username,
       name: user.Name,
+      isAdmin: isAdminUsername(user.Username),
       isCustomer: user.IsCustomer,
       isVendor: user.IsVendor,
       companyIds: user.Companies.map(c => c.Company_ID),

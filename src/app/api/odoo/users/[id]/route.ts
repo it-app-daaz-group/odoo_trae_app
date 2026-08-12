@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
 
 export async function GET(
   request: Request,
@@ -47,7 +46,7 @@ export async function PUT(
   try {
     const id = parseInt(params.id);
     const body = await request.json();
-    const { name, username, password, companyIds, isCustomer, isVendor } = body;
+    const { name, username, companyIds, isCustomer, isVendor } = body;
 
     const data: any = {
       Name: name,
@@ -56,10 +55,6 @@ export async function PUT(
       IsVendor: isVendor,
       Updated_By: "Admin",
     };
-
-    if (password) {
-      data.PasswordHash = await bcrypt.hash(password, 10);
-    }
 
     await prisma.sec_user.update({
       where: { ID: id },

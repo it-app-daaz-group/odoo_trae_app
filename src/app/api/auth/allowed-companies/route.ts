@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { sessionOptions } from "@/lib/session";
+import { isAdminUsername, sessionOptions } from "@/lib/session";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 
@@ -11,11 +11,14 @@ export async function GET() {
   }
 
   try {
+    const isAdmin = Boolean(session.user.isAdmin) || isAdminUsername(session.user.username);
     const allowedCompanies = await prisma.mst_company.findMany({
-      where: {
-        ID: { in: session.user.companyIds },
-        Status: "Active",
-      },
+      where: isAdmin
+        ? { Status: "Active" }
+        : {
+            ID: { in: session.user.companyIds },
+            Status: "Active",
+          },
       orderBy: { Name: "asc" },
     });
 

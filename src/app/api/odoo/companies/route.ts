@@ -1,12 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
-import { sessionOptions } from "@/lib/session";
+import { isAdminUsername, sessionOptions } from "@/lib/session";
 import { SessionData } from "@/types/iron-session";
 
 export async function GET() {
   const session = await getIronSession(cookies(), sessionOptions) as any;
-  if (!session.user || session.user.username !== 'admin') {
+  const isAdmin = session.user
+    ? Boolean(session.user.isAdmin) || isAdminUsername(session.user.username)
+    : false;
+
+  if (!isAdmin) {
     return new Response(JSON.stringify({ success: false, message: "Forbidden" }), { status: 403 });
   }
 
